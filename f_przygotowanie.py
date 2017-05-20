@@ -12,7 +12,6 @@ S = [1, 0]
 SW = [1, -1]
 W = [0, -1]
 ####
-
 def stworz_plansze(rozmiar_planszy, pole):
 
     plansza_gry = []
@@ -24,7 +23,6 @@ def stworz_plansze(rozmiar_planszy, pole):
         plansza_gry.append(wiersz_planszy)
 
     return plansza_gry
-
 
 def wylosuj_miny(plansza_gry, rozmiar_planszy):
 
@@ -89,16 +87,12 @@ def policz_miny(plansza_gry, rozmiar_planszy):
 
 	return plansza_gry
 
-
-
 def przygotuj_plansze(rozmiar_planszy):
 	
 	plansza = stworz_plansze(rozmiar_planszy, 0)
 	plansza = wylosuj_miny(plansza, rozmiar_planszy)
 	plansza = policz_miny(plansza, rozmiar_planszy)
 	return plansza
-
-
 
 def wyswietl_plansze(plansza_gry, rozmiar_planszy):
 
@@ -112,16 +106,17 @@ def wyswietl_plansze(plansza_gry, rozmiar_planszy):
 		print linia
 		print linia2
 
-
 def szukaj_miny(plansza_gry, wiersz, kolumna):
 	
 	if wiersz <0 or kolumna <0:
 		return -1
-	else:
-		pole = plansza_gry[wiersz][kolumna]
-		return pole
-
-
+	else:	
+		try:
+			pole = plansza_gry[wiersz][kolumna]
+			return pole
+		except IndexError:
+			return -2
+		
 def zrob_ruch(plansza_gracza, plansza_oryginal, odkryte_pola, rozmiar_planszy):
 
 	while len(odkryte_pola)<=99:
@@ -149,40 +144,94 @@ def zrob_ruch(plansza_gracza, plansza_oryginal, odkryte_pola, rozmiar_planszy):
 			break
 		elif teraz_odkryte_pole == 0:
 			odkryte_pola.append([wiersz, kolumna])
-			plansza_gracza, odkryte_pola = odkryj_puste_pola(plansza_gracza, plansza_oryginal, odkryte_pola, rozmiar_planszy)
+			L = len(odkryte_pola)
+			plansza_gracza, odkryte_pola = odkryj_puste_pola(plansza_gracza, plansza_oryginal, odkryte_pola)
+			ile_odkryto = len(odkryte_pola)-L
+			print "odkryto tyle pustych pol: ", ile_odkryto
+			##plansza, odkryte = odkryj puste pola 2(ileodkryto) ###odkrywamy to co pierwsza funkcja przeoczyla
+			#testy = raw_input()
 			wyswietl_plansze(plansza_oryginal, rozmiar_planszy)
 			print "\n"
 			wyswietl_plansze(plansza_gracza, rozmiar_planszy)
 		else:
 			odkryte_pola.append([wiersz, kolumna])
 
+def odkryj_puste_pola(plansza_gracza, plansza_oryginal, odkryte_pola):
 
-def odkryj_puste_pola(plansza_gracza, plansza_oryginal, odkryte_pola, rozmiar_planszy):
+	
+	def sprawdz_nastepne_w_poziomie(plansza_gracza, plansza_oryginal, odkryte_pola, pole, wiersz, kolumna, kierunek):
+
+		while (pole == 0 or (pole != -1 and pole != -2)):
+			#print pole
+			if pole != 0:
+				wiersz += kierunek[0]
+				kolumna += kierunek[1]
+				plansza_gracza[wiersz][kolumna] = plansza_oryginal[wiersz][kolumna]
+				odkryte_pola.append([wiersz, kolumna])
+				break
+
+			elif pole == 'X':
+				break
+
+			else:
+				wiersz += kierunek[0]
+				kolumna += kierunek[1]
+				try:
+					plansza_gracza[wiersz][kolumna] = plansza_oryginal[wiersz][kolumna]
+					odkryte_pola.append([wiersz, kolumna])
+					pole = szukaj(plansza_oryginal, wiersz+kierunek[0], kolumna+kierunek[1])
+				except IndexError:
+					break
+
+		return plansza_gracza, odkryte_pola
+
+	def sprawdz_nastepne_w_pionie(plansza_gracza, plansza_oryginal, odkryte_pola, pole, wiersz, kolumna, kierunek):
+    
+		while pole == 0:
+
+			wiersz += kierunek[0]
+			kolumna += kierunek[1]
+			plansza_gracza[wiersz][kolumna] = plansza_oryginal[wiersz][kolumna]
+			odkryte_pola.append([wiersz, kolumna])
+
+			##w lewo
+			pole_lewo = szukaj(plansza_oryginal, wiersz+W[0], kolumna+W[1])
+			plansza_gracza, odkryte_pola = sprawdz_nastepne_w_poziomie(plansza_gracza, plansza_oryginal, odkryte_pola, pole_lewo, wiersz, kolumna, W)
+
+			##w prawo
+			pole_prawo = szukaj(plansza_oryginal, wiersz+E[0], kolumna+E[1])
+			plansza_gracza, odkryte_pola = sprawdz_nastepne_w_poziomie(plansza_gracza, plansza_oryginal, odkryte_pola, pole_prawo, wiersz, kolumna, E)
+
+	            
+			pole = szukaj(plansza_oryginal, wiersz+kierunek[0], kolumna+kierunek[1])
+
+		return plansza_gracza, odkryte_pola
 
 	wiersz = odkryte_pola[-1][0]
 	kolumna = odkryte_pola[-1][1]
 	szukaj = szukaj_miny
-	pole = szukaj(plansza_oryginal, wiersz+W[0], kolumna+W[1])
+	odkryte_pola_temp = []
 
 	###sprawdz biezacy wiersz w lewo
-	while (pole == 0 or pole != -1):
-		print wiersz, kolumna
-		if pole == 1:
-			wiersz += W[0]
-			kolumna += W[1]
-			odkryte_pola.append([wiersz, kolumna])
-			plansza_gracza[wiersz][kolumna] = plansza_oryginal[wiersz][kolumna]
-			break
+	pole_lewo = szukaj(plansza_oryginal, wiersz+W[0], kolumna+W[1])
+	plansza_gracza, odkryte_pola = sprawdz_nastepne_w_poziomie(plansza_gracza, plansza_oryginal, odkryte_pola, pole_lewo, wiersz, kolumna, W)
 
-		elif pole == 'X':
-			break
+	###sprawdz biezacy wiersz w prawo
+	pole_prawo = szukaj(plansza_oryginal, wiersz+E[0], kolumna+E[1])
+	plansza_gracza, odkryte_pola = sprawdz_nastepne_w_poziomie(plansza_gracza, plansza_oryginal, odkryte_pola, pole_prawo, wiersz, kolumna, E)
 
-		else:
-			wiersz += W[0]
-			kolumna += W[1]
-			odkryte_pola.append([wiersz, kolumna])
-			plansza_gracza[wiersz][kolumna] = plansza_oryginal[wiersz][kolumna]
-			pole = szukaj(plansza_oryginal, wiersz+W[0], kolumna+W[1])
+
+	###sprawdzaj wiersze w gore
+	pole_gora = szukaj(plansza_oryginal, wiersz+N[0], kolumna+N[1])
+	plansza_gracza, odkryte_pola = sprawdz_nastepne_w_pionie(plansza_gracza, plansza_oryginal, odkryte_pola, pole_gora, wiersz, kolumna, N)
+
+	###sprawdzaj wiersze w dol
+	pole_dol = szukaj(plansza_oryginal, wiersz+S[0], kolumna+S[1])
+	plansza_gracza, odkryte_pola = sprawdz_nastepne_w_pionie(plansza_gracza, plansza_oryginal, odkryte_pola, pole_dol, wiersz, kolumna, S)
+
+	########ODSZUKAJ BRZEGI
+		
+
 
 	return plansza_gracza, odkryte_pola
 
