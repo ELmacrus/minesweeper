@@ -12,12 +12,12 @@ S = [1, 0]
 SW = [1, -1]
 W = [0, -1]
 
-koordy = [NW, N, NE, E, SE, S, SW, W] #wykorzystywane w odkryj_puste_pola_2
-####
+koordy = [NW, N, NE, E, SE, S, SW, W] #wykorzystywane do sprawdzania 8 sasiadow danego pola
+
+#### funkcja tworzy plansze z wybranym polem
 def stworz_plansze(rozmiar_planszy, pole):
 
     plansza_gry = []
-
     for i in range(rozmiar_planszy):
         wiersz_planszy = []
         for j in range(rozmiar_planszy):
@@ -26,69 +26,37 @@ def stworz_plansze(rozmiar_planszy, pole):
 
     return plansza_gry
 
+#funkcja losuje miny na planszy
 def wylosuj_miny(plansza_gry, rozmiar_planszy, ile_min):
 
 	pole_z_mina = sample(range(rozmiar_planszy*rozmiar_planszy), ile_min)
-	
 	for mina in pole_z_mina:
 		wiersz = int(mina/rozmiar_planszy)
 		kolumna = mina%rozmiar_planszy
 		plansza_gry[wiersz][kolumna] = 'X'
-
-	#print sorted(pole_z_mina)
+	
 	return plansza_gry
 
+#funkcja liczy miny w sasiedztwie pola zeby powstaly pola z numerkiem
 def policz_miny(plansza_gry, rozmiar_planszy):
 
 	for wiersz in range(rozmiar_planszy):
 		for kolumna in range(rozmiar_planszy):
-			bomby = []
-
-			if plansza_gry[wiersz][kolumna] == 0:				
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+NW[0], kolumna+NW[1])) #NW
-				except IndexError:
-					pass
-
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+N[0], kolumna+N[1])) #N
-				except IndexError:
-					pass
-
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+NE[0], kolumna+NE[1])) #NE
-				except IndexError:
-					pass
-
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+E[0], kolumna+E[1])) #E
-				except IndexError:
-					pass
-
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+SE[0], kolumna+SE[1])) #SE
-				except IndexError:
-					pass
-
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+S[0], kolumna+S[1])) #S
-				except IndexError:
-					pass
-
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+SW[0], kolumna+SW[1])) #SW
-				except IndexError:
-					pass
-
-				try:
-					bomby.append(szukaj_miny(plansza_gry, wiersz+W[0], kolumna+W[1])) #W
-				except IndexError:
-					pass
-				
-				plansza_gry[wiersz][kolumna] = bomby.count('X')
+			miny = []
+			if plansza_gry[wiersz][kolumna] == 0:	
+				for koord in koordy:
+					nowy_wiersz = wiersz+koord[0]
+					nowa_kolumna = kolumna+koord[1]
+					if (nowy_wiersz > -1) and (nowa_kolumna > -1):
+						try:
+							miny.append(plansza_gry[wiersz+koord[0]][kolumna+koord[1]])
+						except IndexError:
+							pass			
+				plansza_gry[wiersz][kolumna] = miny.count('X')
 
 	return plansza_gry
 
+#3 powyzsze kroki w jednej funkcji
 def przygotuj_plansze(rozmiar_planszy, ile_min):
 	
 	plansza = stworz_plansze(rozmiar_planszy, 0)
@@ -96,9 +64,9 @@ def przygotuj_plansze(rozmiar_planszy, ile_min):
 	plansza = policz_miny(plansza, rozmiar_planszy)
 	return plansza
 
+#funkcja wyswietla plansze
 def wyswietl_plansze(plansza_gry, rozmiar_planszy):
-
-	#os.system('cls')
+	
 	for wiersz in range(rozmiar_planszy):
 		linia = " "
 		linia2 = ""
@@ -108,6 +76,7 @@ def wyswietl_plansze(plansza_gry, rozmiar_planszy):
 		print linia
 		print linia2
 
+###czy tego nie wyjebac zastanowie sie####################
 def szukaj_miny(plansza_gry, wiersz, kolumna):
 	
 	if wiersz <0 or kolumna <0:
@@ -119,9 +88,10 @@ def szukaj_miny(plansza_gry, wiersz, kolumna):
 		except IndexError:
 			return -2
 
+###funkcja wrzuca wszystkie sasiadujace zera do jednej grupy
 def pogrupuj_puste_pola(plansza_oryginal, rozmiar_planszy):
 
-	zgrupowane_zera = [[[-1,-1]]]
+	zgrupowane_zera = [[[-1,-1]]] #losowa wartosc zeby zadzialala petla for grupa in zgrupowane_zera
 	for wiersz in range(rozmiar_planszy):
 		for kolumna in range(rozmiar_planszy):
 			juz_jest = False
@@ -135,11 +105,12 @@ def pogrupuj_puste_pola(plansza_oryginal, rozmiar_planszy):
 					grupa_zer = []
 					grupa_zer.append([wiersz, kolumna])
 					####sprawdzamy 8 sasiadow
-					grupa_zer = sprawdzaj_8(plansza_oryginal, grupa_zer, koordy, wiersz, kolumna)
-						
+					grupa_zer = sprawdzaj_8(plansza_oryginal, grupa_zer, koordy, wiersz, kolumna)				
 					zgrupowane_zera.append(grupa_zer)
-	zgrupowane_zera[0].pop()
-	#konwersja na numery pol zeby zrobic sety
+
+	zgrupowane_zera[0].pop() ##wyrzucamy [-1 -1]
+
+	#konwersja na numery pol zeby zrobic sety z [4, 6] na 46
 	for grupa_zer in zgrupowane_zera:
 		for i in range(len(grupa_zer)):
 			wiersz = grupa_zer[i][0]
@@ -147,13 +118,14 @@ def pogrupuj_puste_pola(plansza_oryginal, rozmiar_planszy):
 			grupa_zer[i] = (wiersz*rozmiar_planszy) + kolumna
 
 	#tworzymy sety grup z zerami
-	zgrupowane_zera_sety = []
+	zgrupowane_zera_sety = [] ###lista w ktorej sa wszystkie sety(grupy)
 	for grupa_zer in zgrupowane_zera:
 		grupa_zer_set = set()
 		for pole_z_zerem in grupa_zer:
 			grupa_zer_set.add(pole_z_zerem)
 
 		zgrupowane_zera_sety.append(grupa_zer_set)
+
 	#sprawdzamy czy grupy pokrywaja sie ze soba, jeesli tak tworzy wieksza grupe
 	L = len(zgrupowane_zera_sety)
 	ile = L
@@ -165,17 +137,14 @@ def pogrupuj_puste_pola(plansza_oryginal, rozmiar_planszy):
 					zgrupowane_zera_sety[i] = zgrupowane_zera_sety[i].union(zgrupowane_zera_sety[j])
 		ile -= 1
 	#zostawiamy tylko pelne grupy
-	
-	
 	for i in range(L):
 		for j in range(i+1, L):
 			if zgrupowane_zera_sety[i].issuperset(zgrupowane_zera_sety[j]) == True:
 				zgrupowane_zera_sety[j].clear()
 
-		
-	
+	#do kazdej grupy z zerem dorzucamy jej niezerowe sasiedztwo ktore tez powinno sie wyswietlic
 	grupy_zer = odkryj_sasiedztwo_zer(plansza_oryginal, zgrupowane_zera_sety, rozmiar_planszy)
-	
+
 	return grupy_zer
 
 #uzywane w pogrupuj puste pola
@@ -197,6 +166,7 @@ def odkryj_sasiedztwo_zer(plansza_oryginal, grupy_zer_set, rozmiar_planszy):
 	for secik in grupy_zer_set:
 		grupy_zer.append(sorted(list(secik)))
 
+	#przez zerowanie setow.clear w pogrupuj puste pola zostaja puste sety, trzeba sie ich pozbyc
 	grupy_zer_bez_pustych = []
 	for i in range(len(grupy_zer)):
 		if len(grupy_zer[i])>0:
@@ -233,7 +203,6 @@ def odkryj_sasiedztwo_zer(plansza_oryginal, grupy_zer_set, rozmiar_planszy):
 
 		grupy_zer_final.append(grupa_zer_temp)
 
-
 	return grupy_zer_final
 
 
@@ -241,7 +210,6 @@ def odkryj_sasiedztwo_zer(plansza_oryginal, grupy_zer_set, rozmiar_planszy):
 def zrob_ruch(plansza_gracza, plansza_oryginal, odkryte_pola, rozmiar_planszy, ile_min, grupy_zer):
 
 	while len(odkryte_pola)<=(rozmiar_planszy*rozmiar_planszy)-1-ile_min:
-		
 		
 		os.system('cls')
 		wyswietl_plansze(plansza_oryginal, rozmiar_planszy)
@@ -255,7 +223,6 @@ def zrob_ruch(plansza_gracza, plansza_oryginal, odkryte_pola, rozmiar_planszy, i
 		teraz_odkryte_pole = plansza_oryginal[wiersz][kolumna]
 		plansza_gracza[wiersz][kolumna] = teraz_odkryte_pole
 		
-
 		if [wiersz, kolumna] in odkryte_pola:
 			print "To pole jest juz odkryte! Odkryj inne"
 			time.sleep(3)
